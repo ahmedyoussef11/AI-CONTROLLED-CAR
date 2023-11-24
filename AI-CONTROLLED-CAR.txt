@@ -1,0 +1,142 @@
+#include <WiFi.h> 
+#include <WiFiClient.h> 
+#include <WiFiAP.h> 
+ 
+
+// Set these to your desired credentials. 
+const char *ssid = "AI-CONTROLLED-CAR"; 
+const char *password = "123456789"; 
+// You can remove the password parameter if you want the AP to be open. 
+// a valid password must have more than 7 characters 
+
+int motor1Pin1 = 13;  // Motor 1 input pin 1
+int motor1Pin2 = 12;  // Motor 1 input pin 2
+int motor1EN   = 26;  // Motor 1 speed
+int motor2Pin1 = 14;  // Motor 2 input pin 1
+int motor2Pin2 = 27;  // Motor 2 input pin 2
+int motor2EN   = 25;  // Motor 2 speed 
+WiFiServer server(80); 
+ 
+ 
+void setup() { 
+ 
+  pinMode(motor1Pin1, OUTPUT);
+  pinMode(motor1Pin2, OUTPUT);
+  pinMode(motor2Pin1, OUTPUT);
+  pinMode(motor2Pin2, OUTPUT);
+  pinMode(motor1EN,   OUTPUT); 
+  pinMode(motor2EN,   OUTPUT); 
+ 
+ 
+  Serial.begin(115200); 
+  Serial.println(); 
+  Serial.println("Configuring access point..."); 
+ 
+  
+  if (!WiFi.softAP(ssid, password)) { 
+    log_e("Soft AP creation failed."); 
+    while (1) 
+      ; 
+  } 
+  IPAddress myIP = WiFi.softAPIP(); 
+  Serial.print("AP IP address: "); 
+  Serial.println(myIP); 
+  server.begin(); 
+  Serial.println("Server started"); 
+ 
+  // Print the IP address 
+  Serial.print("Use this URL to connect: "); 
+  Serial.print("http://"); 
+  Serial.print(myIP); 
+  Serial.println("/"); 
+} 
+ 
+void loop() { 
+  // Check if a client has connected 
+  WiFiClient client = server.available(); 
+  if (!client) { 
+    return; 
+  } 
+ 
+  // Wait until the client sends some data 
+  Serial.println("new client"); 
+  while (!client.available()) { 
+    delay(1); 
+  } 
+ 
+  // Read the first line of the request 
+  String request = client.readStringUntil('\r'); 
+  Serial.println(request); 
+  client.flush(); 
+ 
+  // Match the request 
+  if (request.indexOf("/Forward") != -1) { 
+   // Motor 1
+   digitalWrite(motor1Pin1, HIGH);
+   digitalWrite(motor1Pin2, LOW);
+
+   // Motor 2
+   digitalWrite(motor2Pin1, HIGH);
+   digitalWrite(motor2Pin2, LOW);
+  
+   // Motors speed
+   analogWrite(motor1EN, 100); 
+   analogWrite(motor2EN, 100);
+
+  } 
+  if (request.indexOf("/Right") != -1) { 
+  // Motor 1
+  digitalWrite(motor1Pin1, HIGH);
+  digitalWrite(motor1Pin2, LOW);
+
+  // Motor 2
+  digitalWrite(motor2Pin1, LOW);
+  digitalWrite(motor2Pin2, HIGH);
+  
+  // Motors speed
+  analogWrite(motor1EN, 100); 
+  analogWrite(motor2EN, 100);
+
+  } 
+if (request.indexOf("/Left") != -1) { 
+  // Motor 1
+  digitalWrite(motor1Pin1, LOW);
+  digitalWrite(motor1Pin2, HIGH);
+
+  // Motor 2
+  digitalWrite(motor2Pin1, HIGH);
+  digitalWrite(motor2Pin2, LOW);
+  
+  // Motors speed
+  analogWrite(motor1EN, 100); 
+  analogWrite(motor2EN, 100);
+ 
+  } 
+   
+  if (request.indexOf("/Stop") != -1) { 
+  // Motor 1
+  digitalWrite(motor1Pin1, LOW);
+  digitalWrite(motor1Pin2, LOW);
+
+  // Motor 2
+  digitalWrite(motor2Pin1, LOW);
+  digitalWrite(motor2Pin2, LOW);
+  
+  // Motors speed
+  analogWrite(motor1EN, 0); 
+  analogWrite(motor2EN, 0);
+ 
+  } 
+ 
+  // Return the response 
+  client.println("HTTP/1.1 200 OK"); 
+  client.println("Content-Type: text/html"); 
+  client.println("");   
+  client.println("<!DOCTYPE HTML>"); 
+  client.println("<html>"); 
+ 
+ 
+  delay(1); 
+  Serial.println("Client disconnected"); 
+  Serial.println(""); 
+}

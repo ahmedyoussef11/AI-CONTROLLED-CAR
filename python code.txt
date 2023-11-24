@@ -1,0 +1,76 @@
+import cv2
+import mediapipe as mp
+import requests
+
+# Initialize MediaPipe Hands module
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands()
+
+# Initialize MediaPipe Drawing module
+mp_drawing = mp.solutions.drawing_utils
+
+# Create a VideoCapture object to access your laptop camera
+cap = cv2.VideoCapture(0)
+
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    frame = cv2.flip(frame, 1)
+    
+    if not ret:
+        continue
+
+    # Convert the BGR image to RGB
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    # Process the frame to detect hands
+    results = hands.process(rgb_frame)
+
+    if results.multi_hand_landmarks:
+        # Get the number of detected hands
+        num_hands = len(results.multi_hand_landmarks)
+
+        if num_hands == 1:
+            # If only one hand is detected, determine if it's left or right
+            landmarks = results.multi_hand_landmarks[0]
+            hand_center_x = sum(landmark.x for landmark in landmarks.landmark) / 21
+
+            if hand_center_x < 0.4:
+                text = "Left"
+            else:
+                text = "Right"
+
+        elif num_hands == 2:
+            # If two hands are detected, consider it as "Forward"
+            text = "Forward"
+        else:
+            text = "Stop"
+    else:
+        # No hand detected
+        text = "Stop"
+
+    # Display the gesture on the screen
+    cv2.putText(frame, text, (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
+    # Draw landmarks on the hand(s)
+    if results.multi_hand_landmarks:
+        for landmarks in results.multi_hand_landmarks:
+            mp_drawing.draw_landmarks(frame, landmarks, mp_hands.HAND_CONNECTIONS)
+
+    # Display the frame
+    cv2.imshow('Hand Gesture Recognition', frame)
+
+    try:
+        # Make the HTTP request
+        r = requests.get(url=f"http://192.168.4.1/{text}")
+        print(r)
+    except Exception as e:
+        print(f"The action is : {text}")
+
+    key = cv2.waitKey(1)
+    if key & 0xFF == 27:  # 27 is the ASCII code for the "Esc" key
+        break
+
+# Release the video capture and close all OpenCV windows
+cap.release()
+cv2.destroyAllWindows()
