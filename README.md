@@ -5,5 +5,3 @@ components :
             - ESP32 
             - 2 motors 
             - Driver motor (L298N) 
-
-LinkedIn : linkedin.com/in/ahmed-youssef-a3660a231
