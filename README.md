@@ -4,4 +4,4 @@ A hands-on project merging computer vision, IoT, and embedded systems. Use hand 
 components :
             - ESP32 
             - 2 motors 
-            - Driver motor (L298N) 
+            - Driver motor (L298N)
